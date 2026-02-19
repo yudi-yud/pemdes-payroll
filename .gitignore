@@ -1,0 +1,140 @@
+# ====================
+# Backend (Go)
+# ====================
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+backend/backend
+backend/pemdes-payroll
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.txt
+coverage.html
+
+# Go workspace file
+go.work
+
+# Vendor directory
+vendor/
+
+# Dependency directories
+backend/backend.exe
+
+# ====================
+# Frontend (Node/Vite)
+# ====================
+# Dependencies
+node_modules/
+jspm_packages/
+
+# Build output
+dist/
+dist-ssr/
+build/
+frontend/dist/
+frontend/build/
+
+# Local development files
+*.local
+.vscode/*-local.*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# ====================
+# IDE & Editor
+# ====================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains IDEs (IntelliJ, GoLand)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ====================
+# OS
+# ====================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msixbundle
+*.msixm
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-0*
+.nfs*
+
+# ====================
+# Logs & Database
+# ====================
+*.log
+logs/
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+
+# ====================
+# Claude Code Memory
+# ====================
+.claude/
+memory/
+
+# ====================
+# Temporary files
+# ====================
+tmp/
+temp/
+*.tmp
+*.cache
+.cache/
