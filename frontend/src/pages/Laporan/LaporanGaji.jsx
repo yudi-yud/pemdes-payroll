@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { laporanAPI } from '../../services/api';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 import Button from '../../components/ui/Button';
 
 const LaporanGaji = () => {
@@ -21,10 +23,12 @@ const LaporanGaji = () => {
         laporanAPI.getLaporanGaji(bulan, tahun),
         laporanAPI.getRekapGaji(bulan, tahun),
       ]);
-      setLaporan(laporanRes.data);
-      setRekap(rekapRes.data);
+      setLaporan(laporanRes.data || []);
+      setRekap(rekapRes.data || null);
     } catch (error) {
       console.error('Error fetching laporan:', error);
+      setLaporan([]);
+      setRekap(null);
     } finally {
       setLoading(false);
     }
@@ -86,7 +90,7 @@ const LaporanGaji = () => {
 
   const handleExportExcel = async () => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/laporan/export/excel?bulan=${bulan}&tahun=${tahun}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/laporan/export/excel?bulan=${bulan}&tahun=${tahun}`, {
         responseType: 'blob',
       });
 
@@ -105,7 +109,7 @@ const LaporanGaji = () => {
 
   const handleExportPDF = async (karyawanId, nama) => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/laporan/export/karyawan/${karyawanId}/pdf`, {
+      const response = await axios.get(`${API_BASE_URL}/api/laporan/export/karyawan/${karyawanId}/pdf`, {
         responseType: 'blob',
       });
 
