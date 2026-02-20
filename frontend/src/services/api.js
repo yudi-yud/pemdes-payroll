@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Use environment variable or fallback to same origin
+// For local development: set VITE_API_URL in .env file
+// For production: API will be proxied through nginx (same origin)
+const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
