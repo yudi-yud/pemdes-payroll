@@ -11,8 +11,10 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-pemdes_payroll}
       MYSQL_USER: ${MYSQL_USER:-payroll_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-payroll_password}
-    ports:
-      - "${MYSQL_PORT:-3306}:3306"
+    # Port 3306 hanya diakses internal via docker network
+    # Comment out jika tidak perlu akses dari luar
+    # ports:
+    #   - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
