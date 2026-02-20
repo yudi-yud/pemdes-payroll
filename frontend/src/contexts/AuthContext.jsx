@@ -47,8 +47,32 @@ export const AuthProvider = ({ children }) => {
     return !!localStorage.getItem('token');
   };
 
+  const hasRole = (roles) => {
+    if (!user) return false;
+    if (Array.isArray(roles)) {
+      return roles.includes(user.role);
+    }
+    return user.role === roles;
+  };
+
+  const hasPermission = (requiredRole) => {
+    if (!user) return false;
+
+    const roleHierarchy = {
+      admin: 4,
+      finance: 3,
+      hr: 2,
+      karyawan: 1,
+    };
+
+    const userLevel = roleHierarchy[user.role] || 0;
+    const requiredLevel = roleHierarchy[requiredRole] || 0;
+
+    return userLevel >= requiredLevel;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, loading, hasRole, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"net/http"
+	"pemdes-payroll/backend/config"
+	"pemdes-payroll/backend/middleware"
 	"pemdes-payroll/backend/models"
 	"pemdes-payroll/backend/repositories"
 	"strconv"
@@ -387,4 +389,83 @@ func (h *GajiHandler) GenerateBatch(c *fiber.Ctx) error {
 		"skipped": skipped,
 		"periode": map[string]int{"bulan": req.PeriodeBulan, "tahun": req.PeriodeTahun},
 	})
+}
+
+// GetSlipGaji handles GET /api/gaji/slip/:id - Get salary slip by ID (for karyawan portal)
+func (h *GajiHandler) GetSlipGaji(c *fiber.Ctx) error {
+	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid ID",
+		})
+	}
+
+	gaji, err := h.gajiRepo.GetByID(uint(id))
+	if err != nil {
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{
+			"error": "Gaji not found",
+		})
+	}
+
+	// Get karyawan data
+	karyawan, err := h.karyawanRepo.GetByIDWithJabatan(gaji.KaryawanID)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch karyawan data",
+		})
+	}
+
+	gaji.Karyawan = *karyawan
+
+	return c.JSON(gaji)
+}
+
+// GetMySlipGaji handles GET /api/gaji/my-slips - Get current user's salary slips (for karyawan portal)
+func (h *GajiHandler) GetMySlipGaji(c *fiber.Ctx) error {
+	// Get user from context
+	userClaims, ok := c.Locals("user").(*middleware.Claims)
+	if !ok || userClaims == nil {
+		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized - no user context",
+		})
+	}
+
+	bulan, _ := strconv.Atoi(c.Query("bulan", "0"))
+	tahun, _ := strconv.Atoi(c.Query("tahun", "0"))
+
+	// Get user with karyawan data
+	userRepo := repositories.NewUserRepository(config.GetDB())
+	userData, err := userRepo.GetByID(userClaims.UserID)
+	if err != nil {
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{
+			"error": "User not found",
+		})
+	}
+
+	gajiList := []models.Gaji{}
+
+	// If user is linked to karyawan
+	if userData.KaryawanID != nil {
+		if bulan > 0 && tahun > 0 {
+			slipData, err := h.gajiRepo.GetByKaryawanAndPeriod(int(*userData.KaryawanID), bulan, tahun)
+			if err == nil && slipData != nil {
+				gajiList = []models.Gaji{*slipData}
+			}
+		} else {
+			slipData, err := h.gajiRepo.GetByKaryawanID(*userData.KaryawanID)
+			if err == nil {
+				gajiList = slipData
+			}
+		}
+	}
+
+	// Load karyawan data for each gaji
+	for i := range gajiList {
+		karyawan, _ := h.karyawanRepo.GetByIDWithJabatan(gajiList[i].KaryawanID)
+		if karyawan != nil {
+			gajiList[i].Karyawan = *karyawan
+		}
+	}
+
+	return c.JSON(gajiList)
 }

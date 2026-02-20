@@ -10,11 +10,22 @@ const Sidebar = ({ collapsed = false, toggleSidebar }) => {
     { path: '/lembur', icon: '⏰', label: 'Lembur' },
     { path: '/gaji', icon: '💰', label: 'Gaji' },
     { path: '/laporan', icon: '📈', label: 'Laporan' },
+    { path: '/users', icon: '👤', label: 'Users' },
+    { path: '/slip-gaji', icon: '📄', label: 'Slip Gaji' },
   ];
 
   return (
-    <aside className={`bg-slate-800 min-h-screen fixed left-0 top-0 transition-all duration-300 z-50 ${collapsed ? 'w-20' : 'w-64'}`}>
-      <div className={`p-6 ${collapsed ? 'px-4 text-center' : ''}`}>
+    <aside
+      className={`bg-slate-800 h-screen fixed left-0 top-0 flex flex-col transition-all duration-300 z-50 ${
+        collapsed ? 'w-20' : 'w-64'
+      }`}
+      style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#475569 #1e293b',
+      }}
+    >
+      {/* Header - Fixed */}
+      <div className={`flex-shrink-0 border-b border-slate-700 ${collapsed ? 'p-4 text-center' : 'p-6'}`}>
         {!collapsed ? (
           <>
             <h1 className="text-xl font-bold text-white">Sistem Payroll</h1>
@@ -25,7 +36,14 @@ const Sidebar = ({ collapsed = false, toggleSidebar }) => {
         )}
       </div>
 
-      <nav className="mt-6">
+      {/* Nav - Scrollable */}
+      <nav
+        className="flex-1 overflow-y-auto overflow-x-hidden mt-4"
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#475569 #1e293b',
+        }}
+      >
         {menuItems.map((item) => (
           <NavLink
             key={item.path}
@@ -37,19 +55,37 @@ const Sidebar = ({ collapsed = false, toggleSidebar }) => {
             `}
             title={collapsed ? item.label : ''}
           >
-            <span className="text-xl ${collapsed ? '' : 'mr-3'}">{item.icon}</span>
-            {!collapsed && <span className="font-medium">{item.label}</span>}
+            <span className={`text-xl flex-shrink-0 ${collapsed ? '' : 'mr-3'}`}>{item.icon}</span>
+            {!collapsed && <span className="font-medium whitespace-nowrap">{item.label}</span>}
           </NavLink>
         ))}
       </nav>
 
-      <div className={`absolute bottom-0 left-0 right-0 border-t border-slate-700 ${collapsed ? 'p-4 text-center' : 'p-6'}`}>
+      {/* Footer - Fixed */}
+      <div className={`flex-shrink-0 border-t border-slate-700 ${collapsed ? 'p-4 text-center' : 'p-6'}`}>
         {collapsed ? (
           <span className="text-xs text-slate-400">©24</span>
         ) : (
-          <p className="text-slate-400 text-sm">© 2024 Pemdes Payroll</p>
+          <p className="text-slate-400 text-sm whitespace-nowrap">© 2024 Pemdes Payroll</p>
         )}
       </div>
+
+      {/* Custom Scrollbar for Webkit browsers */}
+      <style>{`
+        aside nav::-webkit-scrollbar {
+          width: 6px;
+        }
+        aside nav::-webkit-scrollbar-track {
+          background: #1e293b;
+        }
+        aside nav::-webkit-scrollbar-thumb {
+          background: #475569;
+          border-radius: 3px;
+        }
+        aside nav::-webkit-scrollbar-thumb:hover {
+          background: #64748b;
+        }
+      `}</style>
     </aside>
   );
 };

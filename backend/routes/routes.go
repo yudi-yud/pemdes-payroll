@@ -25,7 +25,12 @@ func SetupRoutes(app *fiber.App,
 
 	// Auth routes
 	api.Get("/auth/me", authHandler.Me)
+	api.Get("/auth/users", authHandler.GetUsers)
 	api.Post("/auth/users", authHandler.CreateUser)
+	api.Put("/auth/users/:id", authHandler.UpdateUser)
+	api.Delete("/auth/users/:id", authHandler.DeleteUser)
+	api.Patch("/auth/users/:id/toggle", authHandler.ToggleUserActive)
+	api.Put("/auth/change-password", authHandler.ChangePassword)
 
 	// Jabatan routes
 	api.Get("/jabatan", jabatanHandler.GetAllJabatan)
@@ -65,16 +70,19 @@ func SetupRoutes(app *fiber.App,
 	api.Patch("/lembur/:id/approve", lemburHandler.ApproveLembur)
 	api.Post("/lembur/recalculate-tarif", lemburHandler.RecalculateTarifLembur)
 
-	// Gaji routes
+	// Gaji routes - static routes first, then parameterized routes
 	api.Get("/gaji", gajiHandler.GetAllGaji)
 	api.Get("/gaji/period", gajiHandler.GetGajiByPeriod)
+	api.Get("/gaji/my-slips", gajiHandler.GetMySlipGaji)  // Static route before :id
+	api.Get("/gaji/generate-batch", gajiHandler.GenerateBatch)  // Static route
 	api.Get("/gaji/:id", gajiHandler.GetGajiByID)
 	api.Get("/gaji/karyawan/:id", gajiHandler.GetGajiByKaryawanID)
+	api.Get("/gaji/slip/:id", gajiHandler.GetSlipGaji)
 	api.Post("/gaji", gajiHandler.CreateGaji)
+	api.Post("/gaji/generate-batch", gajiHandler.GenerateBatch)
 	api.Put("/gaji/:id", gajiHandler.UpdateGaji)
 	api.Delete("/gaji/:id", gajiHandler.DeleteGaji)
 	api.Patch("/gaji/:id/status", gajiHandler.UpdateGajiStatus)
-	api.Post("/gaji/generate-batch", gajiHandler.GenerateBatch)
 
 	// Laporan routes
 	api.Get("/laporan/gaji", laporanHandler.GetLaporanGajiByPeriod)

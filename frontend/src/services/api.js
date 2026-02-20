@@ -110,4 +110,20 @@ export const healthAPI = {
   check: () => api.get('/health'),
 };
 
+// User Management API
+export const userAPI = {
+  getAll: () => api.get('/api/auth/users'),
+  create: (data) => api.post('/api/auth/users', data),
+  update: (id, data) => api.put(`/api/auth/users/${id}`, data),
+  delete: (id) => api.delete(`/api/auth/users/${id}`),
+  toggleActive: (id) => api.patch(`/api/auth/users/${id}/toggle`),
+  changePassword: (data) => api.put('/api/auth/change-password', data),
+};
+
+// Employee Portal API
+export const portalAPI = {
+  getMySlips: (bulan, tahun) => api.get(`/api/gaji/my-slips?bulan=${bulan}&tahun=${tahun}`),
+  getSlip: (id) => api.get(`/api/gaji/slip/${id}`),
+};
+
 export default api;

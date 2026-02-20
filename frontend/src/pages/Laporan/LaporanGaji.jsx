@@ -90,8 +90,12 @@ const LaporanGaji = () => {
 
   const handleExportExcel = async () => {
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.get(`${API_BASE_URL}/api/laporan/export/excel?bulan=${bulan}&tahun=${tahun}`, {
         responseType: 'blob',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -109,8 +113,12 @@ const LaporanGaji = () => {
 
   const handleExportPDF = async (karyawanId, nama) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await axios.get(`${API_BASE_URL}/api/laporan/export/karyawan/${karyawanId}/pdf`, {
         responseType: 'blob',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
@@ -141,9 +149,8 @@ const LaporanGaji = () => {
     {
       header: 'Status',
       render: (row) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          row.status === 'dibayar' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-        }`}>
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${row.status === 'dibayar' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+          }`}>
           {row.status === 'dibayar' ? 'Dibayar' : 'Pending'}
         </span>
       ),

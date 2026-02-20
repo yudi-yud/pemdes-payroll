@@ -5,6 +5,7 @@ import (
 	"pemdes-payroll/backend/middleware"
 	"pemdes-payroll/backend/models"
 	"pemdes-payroll/backend/repositories"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -68,7 +69,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	}
 
 	// Create JWT token
-	expirationTime := time.Now().Add(24 * time.Hour)
+	expirationTime := time.Now().Add(1 * time.Hour)
 	claims := &middleware.Claims{
 		UserID:   user.ID,
 		Username: user.Username,
@@ -202,4 +203,184 @@ func (h *AuthHandler) InitAdmin() error {
 	}
 
 	return h.userRepo.Create(&user)
+}
+
+// GetUsers handles GET /api/auth/users - Get all users (admin only)
+func (h *AuthHandler) GetUsers(c *fiber.Ctx) error {
+	users, err := h.userRepo.GetAll()
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch users",
+		})
+	}
+
+	// Remove passwords from response
+	for i := range users {
+		users[i].Password = ""
+	}
+
+	return c.JSON(users)
+}
+
+// UpdateUserRequest represents update user request
+type UpdateUserRequest struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+	IsActive *bool  `json:"is_active"`
+}
+
+// UpdateUser handles PUT /api/auth/users/:id - Update user
+func (h *AuthHandler) UpdateUser(c *fiber.Ctx) error {
+	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid ID",
+		})
+	}
+
+	var req UpdateUserRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Get existing user
+	existing, err := h.userRepo.GetByID(uint(id))
+	if err != nil {
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{
+			"error": "User not found",
+		})
+	}
+
+	// Update fields
+	existing.Name = req.Name
+	existing.Email = req.Email
+	if req.Role != "" {
+		existing.Role = req.Role
+	}
+	if req.IsActive != nil {
+		existing.IsActive = *req.IsActive
+	}
+
+	if err := h.userRepo.Update(uint(id), existing); err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update user",
+		})
+	}
+
+	// Get updated user
+	updated, _ := h.userRepo.GetByID(uint(id))
+	updated.Password = ""
+
+	return c.JSON(updated)
+}
+
+// DeleteUser handles DELETE /api/auth/users/:id - Delete user
+func (h *AuthHandler) DeleteUser(c *fiber.Ctx) error {
+	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid ID",
+		})
+	}
+
+	// Prevent deleting yourself
+	user := c.Locals("user").(*middleware.Claims)
+	if uint(id) == user.UserID {
+		return c.Status(http.StatusForbidden).JSON(fiber.Map{
+			"error": "Cannot delete your own account",
+		})
+	}
+
+	if err := h.userRepo.Delete(uint(id)); err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete user",
+		})
+	}
+
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "User deleted successfully",
+	})
+}
+
+// ToggleUserActive handles PATCH /api/auth/users/:id/toggle - Toggle user active status
+func (h *AuthHandler) ToggleUserActive(c *fiber.Ctx) error {
+	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid ID",
+		})
+	}
+
+	// Prevent toggling yourself
+	user := c.Locals("user").(*middleware.Claims)
+	if uint(id) == user.UserID {
+		return c.Status(http.StatusForbidden).JSON(fiber.Map{
+			"error": "Cannot toggle your own account",
+		})
+	}
+
+	if err := h.userRepo.ToggleActive(uint(id)); err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to toggle user status",
+		})
+	}
+
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "User status toggled successfully",
+	})
+}
+
+// ChangePasswordRequest represents change password request
+type ChangePasswordRequest struct {
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}
+
+// ChangePassword handles PUT /api/auth/change-password - Change user password
+func (h *AuthHandler) ChangePassword(c *fiber.Ctx) error {
+	user := c.Locals("user").(*middleware.Claims)
+
+	var req ChangePasswordRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Get user
+	userData, err := h.userRepo.GetByID(user.UserID)
+	if err != nil {
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{
+			"error": "User not found",
+		})
+	}
+
+	// Verify old password
+	if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(req.OldPassword)); err != nil {
+		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Old password is incorrect",
+		})
+	}
+
+	// Hash new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to hash password",
+		})
+	}
+
+	userData.Password = string(hashedPassword)
+	if err := h.userRepo.Update(user.UserID, userData); err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update password",
+		})
+	}
+
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"message": "Password changed successfully",
+	})
 }

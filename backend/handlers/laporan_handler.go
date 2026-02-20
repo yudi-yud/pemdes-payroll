@@ -183,8 +183,9 @@ func (h *LaporanHandler) ExportKaryawanPDF(c *fiber.Ctx) error {
 	// Generate PDF
 	data, err := h.exportSvc.ExportToPDF(karyawan, gajiList)
 	if err != nil {
+		fmt.Printf("PDF Generation Error: %v\n", err)
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to generate PDF",
+			"error": fmt.Sprintf("Failed to generate PDF: %v", err),
 		})
 	}
 
