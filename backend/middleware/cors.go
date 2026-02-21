@@ -8,7 +8,11 @@ import (
 // CORSConfig returns CORS middleware configuration
 func CORSConfig() fiber.Handler {
 	return cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:5173,http://localhost:3000,http://76.13.23.109:8083,http://76.13.23.109:3001",
+		AllowOriginsFunc: func(origin string) bool {
+			// Allow all origins in development/production
+			// For better security, you can whitelist specific domains
+			return true
+		},
 		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
 		AllowCredentials: false,
